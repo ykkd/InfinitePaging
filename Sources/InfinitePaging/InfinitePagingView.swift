@@ -12,18 +12,21 @@ public protocol Pageable: Equatable & Identifiable {}
 public struct InfinitePagingView<T: Pageable, Content: View>: View {
     @Binding var objects: [T]
     let pageAlignment: PageAlignment
+    let scrollAnimationConfig: ScrollAnimationConfig
     let pagingHandler: (PageDirection) -> Void
     let content: (T) -> Content
 
     public init(
         objects: Binding<[T]>,
         pageAlignment: PageAlignment,
+        scrollAnimationConfig: ScrollAnimationConfig,
         pagingHandler: @escaping (PageDirection) -> Void,
         @ViewBuilder content: @escaping (T) -> Content
     ) {
         assert(objects.wrappedValue.count == 3, "objects count must be 3.")
         _objects = objects
         self.pageAlignment = pageAlignment
+        self.scrollAnimationConfig = scrollAnimationConfig
         self.pagingHandler = pagingHandler
         self.content = content
     }
@@ -43,6 +46,10 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
                     objects: $objects,
                     pageSize: Binding<CGFloat>(
                         get: { pageAlignment.scalar(proxy.size) },
+                        set: { _ in }
+                    ), 
+                    scrollAnimationConfig: Binding<ScrollAnimationConfig>(
+                        get: { scrollAnimationConfig },
                         set: { _ in }
                     ),
                     pageAlignment: pageAlignment,

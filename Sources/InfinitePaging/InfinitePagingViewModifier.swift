@@ -10,6 +10,7 @@ import SwiftUI
 struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
     @Binding var objects: [T]
     @Binding var pageSize: CGFloat
+    @Binding var scrollAnimationConfig: ScrollAnimationConfig
     @State var pagingOffset: CGFloat
     @State var draggingOffset: CGFloat
     let pageAlignment: PageAlignment
@@ -57,11 +58,13 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
     init(
         objects: Binding<[T]>,
         pageSize: Binding<CGFloat>,
+        scrollAnimationConfig: Binding<ScrollAnimationConfig>,
         pageAlignment: PageAlignment,
         pagingHandler: @escaping (PageDirection) -> Void
     ) {
         _objects = objects
         _pageSize = pageSize
+        _scrollAnimationConfig = scrollAnimationConfig
         _pagingOffset = State(initialValue: -pageSize.wrappedValue)
         _draggingOffset = State(initialValue: 0)
         self.pageAlignment = pageAlignment
