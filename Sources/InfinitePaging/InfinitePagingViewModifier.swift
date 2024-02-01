@@ -81,5 +81,30 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
             .onChange(of: pageSize) { _ in
                 pagingOffset = -pageSize
             }
+
+extension InfinitePagingViewModifier {
+    
+    @MainActor
+    private func executePaging(_ direction: PageDirection) {
+        let targetIndex: CGFloat = switch direction {
+        case .backward:
+                0
+        case .forward:
+                2
+        }
+        if #available(iOS 17.0, *) {
+            withAnimation(.linear(duration: 0.1)) {
+                pagingOffset = -pageSize * CGFloat(targetIndex)
+            } completion: {
+                pagingHandler(direction)
+            }
+        } else {
+            withAnimation(.linear(duration: 0.1)) {
+                pagingOffset = -pageSize * CGFloat(targetIndex)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                pagingHandler(direction)
+            }
+        }
     }
 }
