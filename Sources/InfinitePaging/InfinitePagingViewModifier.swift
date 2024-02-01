@@ -107,6 +107,19 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                 executePaging(.forward)
                 timeCount = 0
             }
+            .onAppear {
+                startTimer(scrollAnimationConfig.isActive)
+            }
+            .onDisappear {
+                cancelTimer()
+            }
+            .onReceiveAppLifeCycle { isActive in
+                if isActive {
+                    startTimer(scrollAnimationConfig.isActive)
+                } else {
+                    cancelTimer()
+                }
+            }
     }
 }
 
@@ -146,6 +159,8 @@ extension InfinitePagingViewModifier {
               !isTimerActive else {
             return
         }
+        // TODO: remove
+        print("start timer")
         isTimerActive = true
         timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     }
@@ -154,6 +169,8 @@ extension InfinitePagingViewModifier {
         guard isTimerActive else {
             return
         }
+        // TODO: remove
+        print("cancel timer")
         timeCount = 0
         timer.upstream.connect().cancel()
         isTimerActive = false
