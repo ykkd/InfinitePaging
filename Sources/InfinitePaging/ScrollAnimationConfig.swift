@@ -28,7 +28,7 @@ extension ScrollAnimationConfig {
         case let .active(timeInterval):
             timeInterval
         case .inactive:
-                .zero
+            .zero
         }
     }
 }
