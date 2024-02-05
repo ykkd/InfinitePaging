@@ -26,6 +26,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
     let numberOfContents: Int
     let pageAlignment: PageAlignment
     let pagingHandler: (PageDirection) -> Void
+    let numberOfContentsThresholdForManualPaging: Int = 3
 
     var dragGesture: some Gesture {
         DragGesture(minimumDistance: 0)
@@ -101,11 +102,12 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                 pagingOffset = -pageSize
             }
             .onChange(of: index) { [index] newValue in
-                print("index: from \(index) to \(newValue)")
                 guard index != newValue,
-                      numberOfContents >= 3 else {
+                      !needsManualPagingWhenIndexUpdated else {
                     return
                 }
+                
+                print("index: from \(index) to \(newValue)")
                 
                 let diff: Int = (newValue - index)
                 let isMaxDiff = abs(diff) == (numberOfContents - 1)
@@ -178,6 +180,26 @@ extension InfinitePagingViewModifier {
     }
 }
 
+// MARK: - Private variables
+extension InfinitePagingViewModifier {
+    
+    private var maxIndex: Int {
+        numberOfContents - 1
+    }
+    
+    private var minIndex: Int {
+        .zero
+    }
+    
+    private var thresholdForManualPaging: Int {
+        3
+    }
+    
+    private var needsManualPagingWhenIndexUpdated: Bool {
+        numberOfContents < thresholdForManualPaging
+    }
+}
+
 // MARK: - Timer
 extension InfinitePagingViewModifier {
     
@@ -209,28 +231,38 @@ extension InfinitePagingViewModifier {
     
     @MainActor 
     private func updateIndex(for direction: PageDirection, type: PageUpdateType) {
-        if numberOfContents <= 2 {
-            if type.isAutoUpdate {
-                executePaging(.forward)
+        switch direction {
+        case .backward:
+            let backwardIndex = index - 1
+            if backwardIndex >= minIndex {
+                index = backwardIndex
             } else {
-                executePaging(direction)
+                index = maxIndex
+            }
+        case .forward:
+            let forwardIndex = index + 1
+            if forwardIndex <= maxIndex {
+                index = forwardIndex
+            } else {
+                index = minIndex
             }
         }
         
-        switch direction {
-        case .backward:
-            if (index - 1) >= 0 {
-                index -= 1
-            } else {
-                index = (numberOfContents - 1)
-            }
-        case .forward:
-            if (index + 1) <= (numberOfContents - 1) {
-                index += 1
-            } else {
-                index = .zero
-            }
-        }
+        manuallyExecutePagingIfNeeded(for: direction, type: type)
+        
+        // TODO: remove
         print(index, numberOfContents)
+    }
+    
+    @MainActor
+    private func manuallyExecutePagingIfNeeded(for direction: PageDirection, type: PageUpdateType) {
+        guard needsManualPagingWhenIndexUpdated else {
+            return
+        }
+        if type.isAutoUpdate {
+            executePaging(.forward)
+        } else {
+            executePaging(direction)
+        }
     }
 }
