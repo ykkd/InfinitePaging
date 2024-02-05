@@ -16,6 +16,7 @@ struct ContentView: View {
         Page(number: 1)
     ]
     @State var pageAlignment: PageAlignment = .horizontal
+    @State var currentPage: Int = 0
 
     var body: some View {
         VStack {
@@ -30,6 +31,14 @@ struct ContentView: View {
                     pageView(page)
                 }
             )
+            PageControlView(
+                numberOfPages: 10,
+                currentPage: $currentPage,
+                selectedColor: .black,
+                borderColor: .black
+            )
+                .frame(height: 24)
+                .padding(.vertical, 10)
             Picker("Alignment", selection: $pageAlignment) {
                 ForEach(PageAlignment.allCases) { alignment in
                     Text(verbatim: alignment.label)
