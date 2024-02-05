@@ -12,6 +12,8 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
     @Binding var index: Int
     @Binding var objects: [T]
     
+    @Binding var isAllowAnimation: Bool
+    
     @Binding var pageSize: CGFloat
     @State var pagingOffset: CGFloat
     @State var draggingOffset: CGFloat
@@ -31,6 +33,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
     init(
         index: Binding<Int>,
         objects: Binding<[T]>,
+        isAllowAnimation: Binding<Bool>,
         pageSize: Binding<CGFloat>,
         scrollAnimationConfig: Binding<ScrollAnimationConfig>,
         parentSize: CGSize,
@@ -40,6 +43,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
     ) {
         _index = index
         _objects = objects
+        _isAllowAnimation = isAllowAnimation
         _pageSize = pageSize
         _scrollAnimationConfig = scrollAnimationConfig
         let padding = (UIScreen.main.bounds.width - pageSize.wrappedValue) * 0.5
@@ -58,6 +62,13 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
             .simultaneousGesture(dragGesture)
             .onChange(of: objects) { _ in
                 calcPagingOffset(for: .center)
+            }
+            .onChange(of: isAllowAnimation) { isAllowAnimation in
+                if isAllowAnimation {
+                    startTimerIfNeeded(scrollAnimationConfig.isActive)
+                } else {
+                    cancelTimer()
+                }
             }
             .onChange(of: pageSize) { _ in
                 calcPagingOffset(for: .center)

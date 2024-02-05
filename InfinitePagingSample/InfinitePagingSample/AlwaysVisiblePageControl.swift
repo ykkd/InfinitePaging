@@ -9,7 +9,11 @@ import UIKit
 import SFSafeSymbols
 
 open class AlwaysVisiblePageControl: UIPageControl {
-
+    
+    var onTouchesBegan: (() -> Void)?
+    var onTouchesCancelled: (() -> Void)?
+    var onTouchesEnded: (() -> Void)?
+    
     open override var currentPage: Int {
         didSet {
             updateBorderColor()
@@ -21,6 +25,21 @@ open class AlwaysVisiblePageControl: UIPageControl {
             // 1ページだけの場合でもドットを表示するようにする
             isHidden = false
         }
+    }
+    
+    open override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesBegan(touches, with: event)
+        onTouchesBegan?()
+    }
+
+    open override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesCancelled(touches, with: event)
+        onTouchesCancelled?()
+    }
+    
+    open override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesEnded(touches, with: event)
+        onTouchesEnded?()
     }
     
     private func updateBorderColor() {

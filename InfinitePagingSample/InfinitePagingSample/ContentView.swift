@@ -15,6 +15,8 @@ struct ContentView: View {
     
     @State var pageAlignment: PageAlignment = .horizontal
     @State var currentIndex: Int = 0
+    
+    @State var isAllowAutoScrollAnimation: Bool = true
 
     static func generateDisplayedPages(_ pages: [Page]) -> [Page] {
         guard 3 >= pages.count else {
@@ -47,8 +49,10 @@ struct ContentView: View {
             InfinitePagingView(
                 index: $currentIndex,
                 objects: $displayedPages, 
+                isAllowAnimation: $isAllowAutoScrollAnimation,
                 numberOfContents: pages.count,
                 pageAlignment: pageAlignment,
+                pageLength: UIScreen.main.bounds.width * 0.8,
                 scrollAnimationConfig: .active(2.0),
                 pagingHandler: { pageDirection in
                     paging(pageDirection)
@@ -61,7 +65,16 @@ struct ContentView: View {
                 numberOfPages: pages.count,
                 currentPage: $currentIndex,
                 selectedColor: .black,
-                borderColor: .black
+                borderColor: .black,
+                onTouchesBegan: {
+                    isAllowAutoScrollAnimation = false
+                },
+                onTouchesCancelled: {
+                    isAllowAutoScrollAnimation = true
+                },
+                onTouchesEnded: {
+                    isAllowAutoScrollAnimation = true
+                }
             )
                 .frame(height: 24)
                 .padding(.vertical, 10)

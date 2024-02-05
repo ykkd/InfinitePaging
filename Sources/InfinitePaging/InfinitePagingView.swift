@@ -12,6 +12,7 @@ public protocol Pageable: Equatable & Identifiable {}
 public struct InfinitePagingView<T: Pageable, Content: View>: View {
     @Binding var index: Int
     @Binding var objects: [T]
+    @Binding var isAllowAnimation: Bool
     let numberOfContents: Int
     let pageAlignment: PageAlignment
     let pageLength: CGFloat
@@ -22,6 +23,7 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
     public init(
         index: Binding<Int>,
         objects: Binding<[T]>,
+        isAllowAnimation: Binding<Bool>,
         numberOfContents: Int,
         pageAlignment: PageAlignment,
         pageLength: CGFloat,
@@ -31,6 +33,7 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
     ) {
         _index = index
         _objects = objects
+        _isAllowAnimation = isAllowAnimation
         self.numberOfContents = numberOfContents
         self.pageAlignment = pageAlignment
         self.pageLength = pageLength
@@ -59,6 +62,7 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
                 InfinitePagingViewModifier(
                     index: $index,
                     objects: $objects,
+                    isAllowAnimation: $isAllowAnimation,
                     pageSize: Binding<CGFloat>(
                         get: { pageAlignment.scalar(size) },
                         set: { _ in }
