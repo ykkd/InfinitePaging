@@ -26,7 +26,9 @@ struct ContentView: View {
     var body: some View {
         VStack {
             InfinitePagingView(
-                objects: $displayedPages,
+                index: $currentIndex,
+                objects: $displayedPages, 
+                numberOfContents: pages.count,
                 pageAlignment: pageAlignment,
                 scrollAnimationConfig: .active(3.0),
                 pagingHandler: { pageDirection in

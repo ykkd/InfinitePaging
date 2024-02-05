@@ -10,20 +10,26 @@ import SwiftUI
 public protocol Pageable: Equatable & Identifiable {}
 
 public struct InfinitePagingView<T: Pageable, Content: View>: View {
+    @Binding var index: Int
     @Binding var objects: [T]
+    let numberOfContents: Int
     let pageAlignment: PageAlignment
     let scrollAnimationConfig: ScrollAnimationConfig
     let pagingHandler: (PageDirection) -> Void
     let content: (T) -> Content
 
     public init(
+        index: Binding<Int>,
         objects: Binding<[T]>,
+        numberOfContents: Int,
         pageAlignment: PageAlignment,
         scrollAnimationConfig: ScrollAnimationConfig,
         pagingHandler: @escaping (PageDirection) -> Void,
         @ViewBuilder content: @escaping (T) -> Content
     ) {
+        _index = index
         _objects = objects
+        self.numberOfContents = numberOfContents
         self.pageAlignment = pageAlignment
         self.scrollAnimationConfig = scrollAnimationConfig
         self.pagingHandler = pagingHandler
@@ -42,6 +48,7 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
             }
             .modifier(
                 InfinitePagingViewModifier(
+                    index: $index,
                     objects: $objects,
                     pageSize: Binding<CGFloat>(
                         get: { pageAlignment.scalar(proxy.size) },
@@ -51,6 +58,7 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
                         get: { scrollAnimationConfig },
                         set: { _ in }
                     ),
+                    numberOfContents: numberOfContents,
                     pageAlignment: pageAlignment,
                     pagingHandler: pagingHandler
                 )

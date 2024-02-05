@@ -9,7 +9,7 @@ import Combine
 import SwiftUI
 
 struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
-    
+    @Binding var index: Int
     @Binding var objects: [T]
     
     @Binding var pageSize: CGFloat
@@ -23,6 +23,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
             .common).autoconnect()
     @State var isTimerActive = true
     
+    let numberOfContents: Int
     let pageAlignment: PageAlignment
     let pagingHandler: (PageDirection) -> Void
 
@@ -43,10 +44,10 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                     } completion: {
                         if newIndex == oldIndex { return }
                         if newIndex == 0 {
-                            pagingHandler(.backward)
+                            updateIndex(for: .backward)
                         }
                         if newIndex == 2 {
-                            pagingHandler(.forward)
+                            updateIndex(for: .forward)
                         }
                     }
                 } else {
@@ -56,10 +57,11 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         if newIndex == oldIndex { return }
                         if newIndex == 0 {
-                            pagingHandler(.backward)
+                            updateIndex(for: .backward)
+                            index -= 1
                         }
                         if newIndex == 2 {
-                            pagingHandler(.forward)
+                            updateIndex(for: .forward)
                         }
                     }
                 }
@@ -68,18 +70,22 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
     }
 
     init(
+        index: Binding<Int>,
         objects: Binding<[T]>,
         pageSize: Binding<CGFloat>,
         scrollAnimationConfig: Binding<ScrollAnimationConfig>,
+        numberOfContents: Int,
         pageAlignment: PageAlignment,
         pagingHandler: @escaping (PageDirection) -> Void
     ) {
+        _index = index
         _objects = objects
         _pageSize = pageSize
         _scrollAnimationConfig = scrollAnimationConfig
         _pagingOffset = State(initialValue: -pageSize.wrappedValue)
         _draggingOffset = State(initialValue: 0)
         _timeCount = State(initialValue: 0)
+        self.numberOfContents = numberOfContents
         self.pageAlignment = pageAlignment
         self.pagingHandler = pagingHandler
     }
@@ -94,6 +100,25 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
             .onChange(of: pageSize) { _ in
                 pagingOffset = -pageSize
             }
+            .onChange(of: index) { [index] newValue in
+                guard index != newValue else {
+                    return
+                }
+                
+                print("index: from \(index) to \(newValue)")
+                let diff: Int = (newValue - index)
+                let isMaxDiff = abs(diff) == (numberOfContents - 1)
+                
+                if isMaxDiff {
+                    let direction: PageDirection = diff >= .zero ? .backward : .forward
+                    executePaging(direction)
+                } else {
+                    let direction: PageDirection = diff >= .zero ? .forward : .backward
+                    for i in 1...abs(diff) {
+                        executePaging(direction)
+                    }
+                }
+            }
             .onReceive(timer) { _ in
                 guard scrollAnimationConfig.isActive else {
                     cancelTimer()
@@ -104,7 +129,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                 guard timeCount >= scrollAnimationConfig.threshold else {
                     return
                 }
-                executePaging(.forward)
+                updateIndex(for: .forward)
                 timeCount = 0
             }
             .onAppear {
@@ -128,6 +153,7 @@ extension InfinitePagingViewModifier {
     
     @MainActor
     private func executePaging(_ direction: PageDirection) {
+        print("executePaging")
         let targetIndex: CGFloat = switch direction {
         case .backward:
                 0
@@ -174,5 +200,27 @@ extension InfinitePagingViewModifier {
         timeCount = 0
         timer.upstream.connect().cancel()
         isTimerActive = false
+    }
+}
+
+// MARK: - Index
+extension InfinitePagingViewModifier {
+    
+    private func updateIndex(for direction: PageDirection) {
+        switch direction {
+        case .backward:
+            if (index - 1) >= 0 {
+                index -= 1
+            } else {
+                index = (numberOfContents - 1)
+            }
+        case .forward:
+            if (index + 1) <= (numberOfContents - 1) {
+                index += 1
+            } else {
+                index = .zero
+            }
+        }
+        print(index, numberOfContents)
     }
 }
