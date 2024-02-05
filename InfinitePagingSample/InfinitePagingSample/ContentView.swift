@@ -16,9 +16,28 @@ struct ContentView: View {
     @State var pageAlignment: PageAlignment = .horizontal
     @State var currentIndex: Int = 0
 
+    static func generateDisplayedPages(_ pages: [Page]) -> [Page] {
+        guard 3 >= pages.count else {
+            return pages
+        }
+        
+        var pageCount = pages.count
+        var generatedPages: [Page] = pages
+        var loopCount = 0
+        
+        while 3 > pageCount {
+            let generatedPage = Page.init(id: .init(), number: generatedPages[loopCount].number)
+            generatedPages.append(generatedPage)
+            loopCount += 1
+            pageCount += 1
+        }
+        print(generatedPages.count)
+        return generatedPages
+    }
+    
     init(pages: [Page], pageAlignment: PageAlignment, currentIndex: Int) {
         self.pages = pages
-        self.displayedPages = pages
+        self.displayedPages = Self.generateDisplayedPages(pages)
         self.pageAlignment = pageAlignment
         self.currentIndex = currentIndex
     }
@@ -30,7 +49,7 @@ struct ContentView: View {
                 objects: $displayedPages, 
                 numberOfContents: pages.count,
                 pageAlignment: pageAlignment,
-                scrollAnimationConfig: .active(3.0),
+                scrollAnimationConfig: .active(2.0),
                 pagingHandler: { pageDirection in
                     paging(pageDirection)
                 },
@@ -72,13 +91,13 @@ struct ContentView: View {
         case .backward:
             if let number = displayedPages.first?.number,
                let content = (pages.filter({ $0.number == (number - 1) }).first ?? pages.last) {
-                displayedPages.insert(content, at: 0)
+                displayedPages.insert(Page(id: .init(), number: content.number), at: 0)
                 displayedPages.removeLast()
             }
         case .forward:
             if let number = displayedPages.last?.number,
                let content = (pages.filter({ $0.number == (number + 1) }).first ?? pages.first) {
-                displayedPages.append(content)
+                displayedPages.append(Page(id: .init(), number: content.number))
                 displayedPages.removeFirst()
             }
         }

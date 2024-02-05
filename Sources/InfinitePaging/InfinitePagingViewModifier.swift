@@ -33,7 +33,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                 draggingOffset = pageAlignment.scalar(value.translation)
                 cancelTimer()
             }
-            .onEnded { value in
+            .onEnded { @MainActor value in
                 let oldIndex = Int(floor(0.5 - (pagingOffset / pageSize)))
                 pagingOffset += pageAlignment.scalar(value.translation)
                 draggingOffset = 0
@@ -44,10 +44,10 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                     } completion: {
                         if newIndex == oldIndex { return }
                         if newIndex == 0 {
-                            updateIndex(for: .backward)
+                            updateIndex(for: .backward, fromTimer: false)
                         }
                         if newIndex == 2 {
-                            updateIndex(for: .forward)
+                            updateIndex(for: .forward, fromTimer: false)
                         }
                     }
                 } else {
@@ -57,11 +57,11 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         if newIndex == oldIndex { return }
                         if newIndex == 0 {
-                            updateIndex(for: .backward)
+                            updateIndex(for: .backward, fromTimer: false)
                             index -= 1
                         }
                         if newIndex == 2 {
-                            updateIndex(for: .forward)
+                            updateIndex(for: .forward, fromTimer: false)
                         }
                     }
                 }
@@ -101,11 +101,12 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                 pagingOffset = -pageSize
             }
             .onChange(of: index) { [index] newValue in
-                guard index != newValue else {
+                print("index: from \(index) to \(newValue)")
+                guard index != newValue,
+                      numberOfContents >= 3 else {
                     return
                 }
                 
-                print("index: from \(index) to \(newValue)")
                 let diff: Int = (newValue - index)
                 let isMaxDiff = abs(diff) == (numberOfContents - 1)
                 
@@ -129,7 +130,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                 guard timeCount >= scrollAnimationConfig.threshold else {
                     return
                 }
-                updateIndex(for: .forward)
+                updateIndex(for: .forward, fromTimer: true)
                 timeCount = 0
             }
             .onAppear {
@@ -206,7 +207,16 @@ extension InfinitePagingViewModifier {
 // MARK: - Index
 extension InfinitePagingViewModifier {
     
-    private func updateIndex(for direction: PageDirection) {
+    @MainActor 
+    private func updateIndex(for direction: PageDirection, fromTimer: Bool) {
+        if numberOfContents <= 2 {
+            if fromTimer {
+                executePaging(.forward)
+            } else {
+                executePaging(direction)
+            }
+        }
+        
         switch direction {
         case .backward:
             if (index - 1) >= 0 {
