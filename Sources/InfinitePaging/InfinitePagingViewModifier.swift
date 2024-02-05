@@ -27,47 +27,6 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
     let pageAlignment: PageAlignment
     let pagingHandler: (PageDirection) -> Void
 
-    var dragGesture: some Gesture {
-        DragGesture(minimumDistance: 0)
-            .onChanged { value in
-                draggingOffset = pageAlignment.scalar(value.translation)
-                cancelTimer()
-            }
-            .onEnded { @MainActor value in
-                let oldIndex = Int(floor(0.5 - (pagingOffset / pageSize)))
-                pagingOffset += pageAlignment.scalar(value.translation)
-                draggingOffset = 0
-                let newIndex = Int(max(0, min(2, floor(0.5 - (pagingOffset / pageSize)))))
-                if #available(iOS 17.0, *) {
-                    withAnimation(.linear(duration: 0.1)) {
-                        pagingOffset = -pageSize * CGFloat(newIndex)
-                    } completion: {
-                        if newIndex == oldIndex { return }
-                        if newIndex == 0 {
-                            updateIndex(for: .backward, type: .gesture)
-                        }
-                        if newIndex == 2 {
-                            updateIndex(for: .forward, type: .gesture)
-                        }
-                    }
-                } else {
-                    withAnimation(.linear(duration: 0.1)) {
-                        pagingOffset = -pageSize * CGFloat(newIndex)
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        if newIndex == oldIndex { return }
-                        if newIndex == 0 {
-                            updateIndex(for: .backward, type: .gesture)
-                        }
-                        if newIndex == 2 {
-                            updateIndex(for: .forward, type: .gesture)
-                        }
-                    }
-                }
-                startTimer(scrollAnimationConfig.isActive)
-            }
-    }
-
     init(
         index: Binding<Int>,
         objects: Binding<[T]>,
@@ -101,7 +60,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
             }
             .onChange(of: index) { [index] newValue in
                 guard index != newValue,
-                      !needsManualPagingWhenIndexUpdated else {
+                      !isManualPagingNeededWhenIndexUpdated else {
                     return
                 }
                 
@@ -122,7 +81,8 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                 }
             }
             .onReceive(timer) { _ in
-                guard scrollAnimationConfig.isActive else {
+                guard scrollAnimationConfig.isActive,
+                      isPagingAnimationNeeded else {
                     cancelTimer()
                     return
                 }
@@ -135,18 +95,100 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                 timeCount = 0
             }
             .onAppear {
-                startTimer(scrollAnimationConfig.isActive)
+                startTimerIfNeeded(scrollAnimationConfig.isActive)
             }
             .onDisappear {
                 cancelTimer()
             }
             .onReceiveAppLifeCycle { isActive in
                 if isActive {
-                    startTimer(scrollAnimationConfig.isActive)
+                    startTimerIfNeeded(scrollAnimationConfig.isActive)
                 } else {
                     cancelTimer()
                 }
             }
+    }
+}
+
+// MARK: - Private variables
+extension InfinitePagingViewModifier {
+    
+    private var maxIndex: Int {
+        numberOfContents - 1
+    }
+    
+    private var minIndex: Int {
+        .zero
+    }
+    
+    private var numberOfContentsThresholdForPagingAnimation: Int {
+        1
+    }
+    
+    private var numberOfContentsThresholdForManualPaging: Int {
+        3
+    }
+    
+    private var isManualPagingNeededWhenIndexUpdated: Bool {
+        numberOfContents < numberOfContentsThresholdForManualPaging
+    }
+    
+    private var isPagingAnimationNeeded: Bool {
+        numberOfContents > numberOfContentsThresholdForPagingAnimation
+    }
+}
+
+// MARK: - Gesture
+extension InfinitePagingViewModifier {
+    
+    private var dragGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                draggingOffset = pageAlignment.scalar(value.translation)
+                cancelTimer()
+            }
+            .onEnded { @MainActor value in
+                let oldPosition = PagePosition(Int(floor(0.5 - (pagingOffset / pageSize))))
+                pagingOffset += pageAlignment.scalar(value.translation)
+                draggingOffset = 0
+                let newPosition = PagePosition(Int(max(0, min(2, floor(0.5 - (pagingOffset / pageSize))))))
+                executePagingAnimationIfNeeded(newPosition: newPosition, oldPosition: oldPosition)
+                startTimerIfNeeded(scrollAnimationConfig.isActive)
+            }
+    }
+    
+    @MainActor
+    private func executePagingAnimationIfNeeded(newPosition: PagePosition, oldPosition: PagePosition) {
+        if #available(iOS 17.0, *) {
+            withAnimation(.linear(duration: 0.1)) {
+                pagingOffset = -pageSize * CGFloat(newPosition.rawValue)
+            } completion: {
+                if newPosition == oldPosition {
+                    return
+                }
+                if newPosition == .first {
+                    updateIndex(for: .backward, type: .gesture)
+                }
+                if newPosition == .third {
+                    updateIndex(for: .forward, type: .gesture)
+                }
+            }
+        } else {
+            withAnimation(.linear(duration: 0.1)) {
+                pagingOffset = -pageSize * CGFloat(newPosition.rawValue)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                if newPosition == oldPosition {
+                    return
+                }
+                if newPosition == .first {
+                    updateIndex(for: .backward, type: .gesture)
+                }
+                if newPosition == .third {
+                    updateIndex(for: .forward, type: .gesture)
+                }
+            }
+        }
     }
 }
 
@@ -180,31 +222,12 @@ extension InfinitePagingViewModifier {
     }
 }
 
-// MARK: - Private variables
-extension InfinitePagingViewModifier {
-    
-    private var maxIndex: Int {
-        numberOfContents - 1
-    }
-    
-    private var minIndex: Int {
-        .zero
-    }
-    
-    private var thresholdForManualPaging: Int {
-        3
-    }
-    
-    private var needsManualPagingWhenIndexUpdated: Bool {
-        numberOfContents < thresholdForManualPaging
-    }
-}
-
 // MARK: - Timer
 extension InfinitePagingViewModifier {
     
-    private func startTimer(_ isScrollAnimationActive: Bool) {
+    private func startTimerIfNeeded(_ isScrollAnimationActive: Bool) {
         guard isScrollAnimationActive,
+              isPagingAnimationNeeded,
               !isTimerActive else {
             return
         }
@@ -256,7 +279,7 @@ extension InfinitePagingViewModifier {
     
     @MainActor
     private func manuallyExecutePagingIfNeeded(for direction: PageDirection, type: PageUpdateType) {
-        guard needsManualPagingWhenIndexUpdated else {
+        guard isManualPagingNeededWhenIndexUpdated else {
             return
         }
         if type.isAutoUpdate {
