@@ -23,7 +23,6 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
         pagingHandler: @escaping (PageDirection) -> Void,
         @ViewBuilder content: @escaping (T) -> Content
     ) {
-        assert(objects.wrappedValue.count == 3, "objects count must be 3.")
         _objects = objects
         self.pageAlignment = pageAlignment
         self.scrollAnimationConfig = scrollAnimationConfig

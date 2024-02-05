@@ -10,19 +10,24 @@ import InfinitePaging
 
 struct ContentView: View {
     // Prepare three elements to display at first.
-    @State var pages: [Page] = [
-        Page(number: -1),
-        Page(number: 0),
-        Page(number: 1)
-    ]
+    @State var pages: [Page]
+    @State private var displayedPages: [Page]
+    
     @State var pageAlignment: PageAlignment = .horizontal
-    @State var currentPage: Int = 0
+    @State var currentIndex: Int = 0
 
+    init(pages: [Page], pageAlignment: PageAlignment, currentIndex: Int) {
+        self.pages = pages
+        self.displayedPages = pages
+        self.pageAlignment = pageAlignment
+        self.currentIndex = currentIndex
+    }
+    
     var body: some View {
         VStack {
             InfinitePagingView(
-                objects: $pages,
-                pageAlignment: pageAlignment, 
+                objects: $displayedPages,
+                pageAlignment: pageAlignment,
                 scrollAnimationConfig: .active(3.0),
                 pagingHandler: { pageDirection in
                     paging(pageDirection)
@@ -32,8 +37,8 @@ struct ContentView: View {
                 }
             )
             PageControlView(
-                numberOfPages: 10,
-                currentPage: $currentPage,
+                numberOfPages: pages.count,
+                currentPage: $currentIndex,
                 selectedColor: .black,
                 borderColor: .black
             )
@@ -63,14 +68,16 @@ struct ContentView: View {
     private func paging(_ pageDirection: PageDirection) {
         switch pageDirection {
         case .backward:
-            if let number = pages.first?.number {
-                pages.insert(Page(number: number - 1), at: 0)
-                pages.removeLast()
+            if let number = displayedPages.first?.number,
+               let content = (pages.filter({ $0.number == (number - 1) }).first ?? pages.last) {
+                displayedPages.insert(content, at: 0)
+                displayedPages.removeLast()
             }
         case .forward:
-            if let number = pages.last?.number {
-                pages.append(Page(number: number + 1))
-                pages.removeFirst()
+            if let number = displayedPages.last?.number,
+               let content = (pages.filter({ $0.number == (number + 1) }).first ?? pages.first) {
+                displayedPages.append(content)
+                displayedPages.removeFirst()
             }
         }
     }
@@ -82,5 +89,20 @@ extension PageAlignment: Identifiable {
 }
 
 #Preview {
-    ContentView()
+    ContentView(
+        pages: [
+            Page(number: 0),
+            Page(number: 1),
+            Page(number: 2),
+            Page(number: 3),
+            Page(number: 4),
+            Page(number: 5),
+            Page(number: 6),
+            Page(number: 7),
+            Page(number: 8),
+            Page(number: 9),
+        ], 
+        pageAlignment: .horizontal,
+        currentIndex: 0
+    )
 }
