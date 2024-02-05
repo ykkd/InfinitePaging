@@ -13,6 +13,9 @@
 		1CE66B932AE4F71000AC612D /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1CE66B922AE4F71000AC612D /* Preview Assets.xcassets */; };
 		1CE66B9B2AE4F78300AC612D /* InfinitePaging in Frameworks */ = {isa = PBXBuildFile; productRef = 1CE66B9A2AE4F78300AC612D /* InfinitePaging */; };
 		1CE66B9D2AE4F7CB00AC612D /* Page.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CE66B9C2AE4F7CB00AC612D /* Page.swift */; };
+		D2B184CE2B708CBD00CB56BB /* PageControlView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B184CD2B708CBD00CB56BB /* PageControlView.swift */; };
+		D2B184D02B708CE600CB56BB /* AlwaysVisiblePageControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2B184CF2B708CE600CB56BB /* AlwaysVisiblePageControl.swift */; };
+		D2B184D32B708D8000CB56BB /* SFSafeSymbols in Frameworks */ = {isa = PBXBuildFile; productRef = D2B184D22B708D8000CB56BB /* SFSafeSymbols */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +25,8 @@
 		1CE66B8F2AE4F71000AC612D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1CE66B922AE4F71000AC612D /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		1CE66B9C2AE4F7CB00AC612D /* Page.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Page.swift; sourceTree = "<group>"; };
+		D2B184CD2B708CBD00CB56BB /* PageControlView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageControlView.swift; sourceTree = "<group>"; };
+		D2B184CF2B708CE600CB56BB /* AlwaysVisiblePageControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlwaysVisiblePageControl.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -29,6 +34,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D2B184D32B708D8000CB56BB /* SFSafeSymbols in Frameworks */,
 				1CE66B9B2AE4F78300AC612D /* InfinitePaging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -60,6 +66,8 @@
 				1CE66B9C2AE4F7CB00AC612D /* Page.swift */,
 				1CE66B8F2AE4F71000AC612D /* Assets.xcassets */,
 				1CE66B912AE4F71000AC612D /* Preview Content */,
+				D2B184CD2B708CBD00CB56BB /* PageControlView.swift */,
+				D2B184CF2B708CE600CB56BB /* AlwaysVisiblePageControl.swift */,
 			);
 			path = InfinitePagingSample;
 			sourceTree = "<group>";
@@ -90,6 +98,7 @@
 			name = InfinitePagingSample;
 			packageProductDependencies = (
 				1CE66B9A2AE4F78300AC612D /* InfinitePaging */,
+				D2B184D22B708D8000CB56BB /* SFSafeSymbols */,
 			);
 			productName = InfinitePagingSample;
 			productReference = 1CE66B882AE4F70F00AC612D /* InfinitePagingSample.app */;
@@ -121,6 +130,7 @@
 			mainGroup = 1CE66B7F2AE4F70F00AC612D;
 			packageReferences = (
 				1CE66B992AE4F78300AC612D /* XCLocalSwiftPackageReference ".." */,
+				D2B184D12B708D8000CB56BB /* XCRemoteSwiftPackageReference "SFSafeSymbols" */,
 			);
 			productRefGroup = 1CE66B892AE4F70F00AC612D /* Products */;
 			projectDirPath = "";
@@ -149,8 +159,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				1CE66B8E2AE4F70F00AC612D /* ContentView.swift in Sources */,
+				D2B184CE2B708CBD00CB56BB /* PageControlView.swift in Sources */,
 				1CE66B8C2AE4F70F00AC612D /* InfinitePagingSampleApp.swift in Sources */,
 				1CE66B9D2AE4F7CB00AC612D /* Page.swift in Sources */,
+				D2B184D02B708CE600CB56BB /* AlwaysVisiblePageControl.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -370,10 +382,26 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		D2B184D12B708D8000CB56BB /* XCRemoteSwiftPackageReference "SFSafeSymbols" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SFSafeSymbols/SFSafeSymbols.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.1.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		1CE66B9A2AE4F78300AC612D /* InfinitePaging */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = InfinitePaging;
+		};
+		D2B184D22B708D8000CB56BB /* SFSafeSymbols */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D2B184D12B708D8000CB56BB /* XCRemoteSwiftPackageReference "SFSafeSymbols" */;
+			productName = SFSafeSymbols;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
