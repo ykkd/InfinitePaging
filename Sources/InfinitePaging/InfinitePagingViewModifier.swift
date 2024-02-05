@@ -23,6 +23,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
             .common).autoconnect()
     @State var isTimerActive = true
     
+    let parentSize: CGSize
     let numberOfContents: Int
     let pageAlignment: PageAlignment
     let pagingHandler: (PageDirection) -> Void
@@ -32,6 +33,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
         objects: Binding<[T]>,
         pageSize: Binding<CGFloat>,
         scrollAnimationConfig: Binding<ScrollAnimationConfig>,
+        parentSize: CGSize,
         numberOfContents: Int,
         pageAlignment: PageAlignment,
         pagingHandler: @escaping (PageDirection) -> Void
@@ -40,9 +42,11 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
         _objects = objects
         _pageSize = pageSize
         _scrollAnimationConfig = scrollAnimationConfig
-        _pagingOffset = State(initialValue: -pageSize.wrappedValue)
+        let padding = (UIScreen.main.bounds.width - pageSize.wrappedValue) * 0.5
+        _pagingOffset = State(initialValue: -pageSize.wrappedValue + padding)
         _draggingOffset = State(initialValue: 0)
         _timeCount = State(initialValue: 0)
+        self.parentSize = parentSize
         self.numberOfContents = numberOfContents
         self.pageAlignment = pageAlignment
         self.pagingHandler = pagingHandler
@@ -53,10 +57,10 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
             .offset(pageAlignment.offset(pagingOffset + draggingOffset))
             .simultaneousGesture(dragGesture)
             .onChange(of: objects) { _ in
-                pagingOffset = -pageSize
+                calcPagingOffset(for: .center)
             }
             .onChange(of: pageSize) { _ in
-                pagingOffset = -pageSize
+                calcPagingOffset(for: .center)
             }
             .onChange(of: index) { [index] newValue in
                 guard index != newValue,
@@ -161,7 +165,7 @@ extension InfinitePagingViewModifier {
     private func executePagingAnimationIfNeeded(newPosition: PagePosition, oldPosition: PagePosition) {
         if #available(iOS 17.0, *) {
             withAnimation(.linear(duration: 0.1)) {
-                pagingOffset = -pageSize * CGFloat(newPosition.rawValue)
+                calcPagingOffset(for: newPosition)
             } completion: {
                 if newPosition == oldPosition {
                     return
@@ -175,7 +179,7 @@ extension InfinitePagingViewModifier {
             }
         } else {
             withAnimation(.linear(duration: 0.1)) {
-                pagingOffset = -pageSize * CGFloat(newPosition.rawValue)
+                calcPagingOffset(for: newPosition)
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 if newPosition == oldPosition {
@@ -199,7 +203,7 @@ extension InfinitePagingViewModifier {
     private func executePaging(_ direction: PageDirection) {
         // TODO: remove
         print("executePaging")
-        let targetIndex: CGFloat = switch direction {
+        let targetIndex: Int = switch direction {
         case .backward:
                 0
         case .forward:
@@ -207,18 +211,29 @@ extension InfinitePagingViewModifier {
         }
         if #available(iOS 17.0, *) {
             withAnimation(.linear(duration: 0.1)) {
-                pagingOffset = -pageSize * CGFloat(targetIndex)
+                calcPagingOffset(for: PagePosition(targetIndex))
             } completion: {
                 pagingHandler(direction)
             }
         } else {
             withAnimation(.linear(duration: 0.1)) {
-                pagingOffset = -pageSize * CGFloat(targetIndex)
+                calcPagingOffset(for: PagePosition(targetIndex))
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 pagingHandler(direction)
             }
         }
+    }
+    
+    private func calcPagingOffset(for position: PagePosition) {
+        let padding = switch pageAlignment {
+        case .horizontal:
+            (parentSize.width - pageSize) * 0.5
+        case .vertical:
+            (parentSize.height - pageSize) * 0.5
+
+        }
+        pagingOffset = (-pageSize + padding) * CGFloat(position.rawValue)
     }
 }
 

@@ -14,6 +14,7 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
     @Binding var objects: [T]
     let numberOfContents: Int
     let pageAlignment: PageAlignment
+    let pageLength: CGFloat
     let scrollAnimationConfig: ScrollAnimationConfig
     let pagingHandler: (PageDirection) -> Void
     let content: (T) -> Content
@@ -23,6 +24,7 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
         objects: Binding<[T]>,
         numberOfContents: Int,
         pageAlignment: PageAlignment,
+        pageLength: CGFloat,
         scrollAnimationConfig: ScrollAnimationConfig,
         pagingHandler: @escaping (PageDirection) -> Void,
         @ViewBuilder content: @escaping (T) -> Content
@@ -31,6 +33,7 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
         _objects = objects
         self.numberOfContents = numberOfContents
         self.pageAlignment = pageAlignment
+        self.pageLength = pageLength
         self.scrollAnimationConfig = scrollAnimationConfig
         self.pagingHandler = pagingHandler
         self.content = content
@@ -38,12 +41,18 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
 
     public var body: some View {
         GeometryReader { proxy in
+            let size: CGSize = switch pageAlignment {
+            case .horizontal:
+                CGSize(width: pageLength, height: proxy.size.height)
+            case .vertical:
+                CGSize(width: proxy.size.width, height: pageLength)
+            }
             Group {
                 switch pageAlignment {
                 case .horizontal:
-                    horizontalView(size: proxy.size)
+                    horizontalView(size: size)
                 case .vertical:
-                    verticalView(size: proxy.size)
+                    verticalView(size: size)
                 }
             }
             .modifier(
@@ -51,13 +60,14 @@ public struct InfinitePagingView<T: Pageable, Content: View>: View {
                     index: $index,
                     objects: $objects,
                     pageSize: Binding<CGFloat>(
-                        get: { pageAlignment.scalar(proxy.size) },
+                        get: { pageAlignment.scalar(size) },
                         set: { _ in }
-                    ), 
+                    ),
                     scrollAnimationConfig: Binding<ScrollAnimationConfig>(
                         get: { scrollAnimationConfig },
                         set: { _ in }
                     ),
+                    parentSize: proxy.size,
                     numberOfContents: numberOfContents,
                     pageAlignment: pageAlignment,
                     pagingHandler: pagingHandler
