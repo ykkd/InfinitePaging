@@ -44,10 +44,10 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                     } completion: {
                         if newIndex == oldIndex { return }
                         if newIndex == 0 {
-                            updateIndex(for: .backward, fromTimer: false)
+                            updateIndex(for: .backward, type: .gesture)
                         }
                         if newIndex == 2 {
-                            updateIndex(for: .forward, fromTimer: false)
+                            updateIndex(for: .forward, type: .gesture)
                         }
                     }
                 } else {
@@ -57,11 +57,11 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         if newIndex == oldIndex { return }
                         if newIndex == 0 {
-                            updateIndex(for: .backward, fromTimer: false)
+                            updateIndex(for: .backward, type: .gesture)
                             index -= 1
                         }
                         if newIndex == 2 {
-                            updateIndex(for: .forward, fromTimer: false)
+                            updateIndex(for: .forward, type: .gesture)
                         }
                     }
                 }
@@ -130,7 +130,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                 guard timeCount >= scrollAnimationConfig.threshold else {
                     return
                 }
-                updateIndex(for: .forward, fromTimer: true)
+                updateIndex(for: .forward, type: .autoScroll)
                 timeCount = 0
             }
             .onAppear {
@@ -208,9 +208,9 @@ extension InfinitePagingViewModifier {
 extension InfinitePagingViewModifier {
     
     @MainActor 
-    private func updateIndex(for direction: PageDirection, fromTimer: Bool) {
+    private func updateIndex(for direction: PageDirection, type: PageUpdateType) {
         if numberOfContents <= 2 {
-            if fromTimer {
+            if type.isAutoUpdate {
                 executePaging(.forward)
             } else {
                 executePaging(direction)
