@@ -26,7 +26,6 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
     let numberOfContents: Int
     let pageAlignment: PageAlignment
     let pagingHandler: (PageDirection) -> Void
-    let numberOfContentsThresholdForManualPaging: Int = 3
 
     var dragGesture: some Gesture {
         DragGesture(minimumDistance: 0)
@@ -59,7 +58,6 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                         if newIndex == oldIndex { return }
                         if newIndex == 0 {
                             updateIndex(for: .backward, type: .gesture)
-                            index -= 1
                         }
                         if newIndex == 2 {
                             updateIndex(for: .forward, type: .gesture)
@@ -107,6 +105,7 @@ struct InfinitePagingViewModifier<T: Pageable>: ViewModifier {
                     return
                 }
                 
+                // TODO: remove
                 print("index: from \(index) to \(newValue)")
                 
                 let diff: Int = (newValue - index)
@@ -156,6 +155,7 @@ extension InfinitePagingViewModifier {
     
     @MainActor
     private func executePaging(_ direction: PageDirection) {
+        // TODO: remove
         print("executePaging")
         let targetIndex: CGFloat = switch direction {
         case .backward:
